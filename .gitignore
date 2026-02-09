@@ -1,0 +1,14 @@
+# secrets
+.env
+server/.env
+server/token.json
+client_secret.json
+
+# runtime archives
+server/archive/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
