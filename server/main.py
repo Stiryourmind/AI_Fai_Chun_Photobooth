@@ -376,15 +376,22 @@ async def api_finalize(taskId: str = Form(...), archiveId: str = Form(...)):
         output_path.write_bytes(img_bytes)
 
         # upload output + meta to Drive (same folder as input)
-        drive_folder_id = meta.get("driveFolderId")
         if GDRIVE_ENABLED and drive_folder_id:
-            drive = get_drive()
-            drive_upload_bytes(drive, "output.png", img_bytes, "image/png", drive_folder_id)
+            try:
+                drive = get_drive()
+                print("FINALIZE: uploading output.png to Drive folder:", drive_folder_id)
+                drive_upload_bytes(drive, "output.png", img_bytes, "image/png", drive_folder_id)
+                print("FINALIZE: upload output.png success")
+            except Exception as e:
+                print("FINALIZE: upload output.png FAILED:", repr(e))
+
 
         # update meta and save locally
         meta["outputUrl"] = image_url
         meta["finalizedAt"] = datetime.now().isoformat()
         meta_path.write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
+
+        print("FINALIZE: drive enabled =", GDRIVE_ENABLED, "driveFolderId =", drive_folder_id)
 
         # upload updated meta.json to Drive
         if GDRIVE_ENABLED and drive_folder_id:
