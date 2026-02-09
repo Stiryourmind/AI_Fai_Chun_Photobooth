@@ -16,11 +16,13 @@ from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import BackgroundTasks
+from fastapi import Form
 
 # Google Drive OAuth (optional)
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
+from googleapiclient.errors import HttpError
 
 
 # =========================
@@ -336,21 +338,18 @@ async def api_result(taskId: str = Query(...)):
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 
+
 @app.post("/api/finalize")
 async def api_finalize(taskId: str = Form(...), archiveId: str = Form(...)):
-    """
-    Auto-archive output (local + Google Drive) as soon as result is ready.
-    This is called by the frontend right after it receives ready=true.
-    Safe to call multiple times.
-    """
     missing = require_env()
     if missing:
         return missing
 
+    play_dir = get_play_dir(archiveId)
+    meta_path = play_dir / "meta.json"
+
     try:
-        play_dir = get_play_dir(archiveId)
-        meta_path = play_dir / "meta.json"
-        meta: Dict[str, Any] = {}
+        meta = {}
         if meta_path.exists():
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
 
@@ -358,6 +357,7 @@ async def api_finalize(taskId: str = Form(...), archiveId: str = Form(...)):
         if output_path.exists():
             return {"ok": True, "alreadyFinalized": True}
 
+        # 1) get output url
         rs = await api_result(taskId)
         if isinstance(rs, JSONResponse):
             return rs
@@ -366,42 +366,70 @@ async def api_finalize(taskId: str = Form(...), archiveId: str = Form(...)):
 
         image_url = rs["imageUrl"]
 
-        # download output bytes
+        # 2) download bytes from RunningHub
         async with httpx.AsyncClient(timeout=180) as client:
             r = await client.get(image_url)
             r.raise_for_status()
             img_bytes = r.content
 
-        # save locally
+        # 3) save locally
         output_path.write_bytes(img_bytes)
 
-        # upload output + meta to Drive (same folder as input)
+        # 4) upload to Drive (if enabled)
+        drive_folder_id = meta.get("driveFolderId")
+        print("[FINALIZE] enabled=", GDRIVE_ENABLED, "driveFolderId=", drive_folder_id, "tokenPath=", str(TOKEN_PATH))
+
         if GDRIVE_ENABLED and drive_folder_id:
             try:
                 drive = get_drive()
-                print("FINALIZE: uploading output.png to Drive folder:", drive_folder_id)
+                print("[FINALIZE] Uploading output.png to Drive...")
                 drive_upload_bytes(drive, "output.png", img_bytes, "image/png", drive_folder_id)
-                print("FINALIZE: upload output.png success")
+                print("[FINALIZE] Upload output.png OK")
+
+                meta["driveOutputUploadedAt"] = datetime.now().isoformat()
+            except HttpError as e:
+                # Google API error details
+                print("[FINALIZE] Drive upload HttpError:", e)
+                return JSONResponse(
+                    status_code=500,
+                    content={
+                        "error": "Drive upload failed (HttpError)",
+                        "details": str(e),
+                        "driveFolderId": drive_folder_id,
+                    },
+                )
             except Exception as e:
-                print("FINALIZE: upload output.png FAILED:", repr(e))
+                print("[FINALIZE] Drive upload Exception:", repr(e))
+                return JSONResponse(
+                    status_code=500,
+                    content={
+                        "error": "Drive upload failed (Exception)",
+                        "details": repr(e),
+                        "driveFolderId": drive_folder_id,
+                    },
+                )
 
-
-        # update meta and save locally
+        # 5) update meta locally
         meta["outputUrl"] = image_url
         meta["finalizedAt"] = datetime.now().isoformat()
         meta_path.write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
 
-        print("FINALIZE: drive enabled =", GDRIVE_ENABLED, "driveFolderId =", drive_folder_id)
-
-        # upload updated meta.json to Drive
+        # 6) upload meta.json to Drive too (optional)
         if GDRIVE_ENABLED and drive_folder_id:
-            drive = get_drive()
-            drive_upload_text(drive, "meta.json", json.dumps(meta, indent=2, ensure_ascii=False), drive_folder_id)
+            try:
+                drive = get_drive()
+                drive_upload_text(drive, "meta.json", json.dumps(meta, indent=2, ensure_ascii=False), drive_folder_id)
+                print("[FINALIZE] Upload meta.json OK")
+            except Exception as e:
+                print("[FINALIZE] Upload meta.json FAILED:", repr(e))
+                # don't fail finalize just because meta upload failed
 
         return {"ok": True}
 
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        # anything else
+        print("[FINALIZE] UNHANDLED:", repr(e))
+        return JSONResponse(status_code=500, content={"error": "Finalize failed", "details": repr(e)})
 
 
 @app.get("/api/download")
