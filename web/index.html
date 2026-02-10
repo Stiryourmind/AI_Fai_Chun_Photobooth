@@ -24,6 +24,349 @@ body{
 
     /* 🔴 RED GRADIENT BASE (put LAST) */
     linear-gradient(
+      150deg,
+      #f14f15 0%,
+      #8b0000 100%
+    );
+
+  background-size: 
+    100px 100px,
+    cover;
+
+  background-attachment: fixed;
+}
+
+
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(
+      ellipse at top,
+      rgba(255,215,120,.18),
+      transparent 60%
+    );
+}
+
+
+    .wrap{ max-width:520px; margin:0 auto; padding:16px; }
+    .card{
+      background: transparent;
+      border:1px solid #e6b35c;
+      border-radius:16px;
+      padding:14px;
+      display:grid;
+      gap:14px;
+    }
+    h1{ font-size:20px; margin:0; }
+    p{ margin:0; font-size:13px; opacity:.85; line-height:1.35; }
+
+    .imgbox{
+      width:100%;
+      aspect-ratio:1/1;
+      border:1px dashed #e6b35c;
+      background:#ffbb0015;
+      border-radius:14px;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .imgbox img{ width:100%; height:100%; object-fit:contain; }
+    input[type=file]{ width:100%; }
+
+    .hint{ font-size:12px; opacity:.7; text-align:center; }
+
+    .tpl{ cursor:pointer; }
+    .tpl input{ display:none; }
+    .tplCard{
+      border:1px solid #ffc766;
+      background:#ffbb0029;
+      border-radius:14px;
+      padding:10px;
+      display:grid;
+      gap:8px;
+    }
+    .tplThumb{
+      width:100%;
+      aspect-ratio:1/1;
+      border-radius:10px;
+      overflow:hidden;
+      background:transparent;
+    }
+    .tplThumb img{ width:100%; height:100%; object-fit:contain; background:transparent; }
+    .tplTitle{ font-size:14px; font-weight:800; text-align:center; }
+    .tpl input:checked + .tplCard{
+      border-color:solid #e6b35c;
+      box-shadow:0 0 0 2px rgba(230,179,92,.35) inset;
+    }
+
+    button{
+      width:100%;
+      padding:12px;
+      border-radius:12px;
+
+      background: transparent;
+      border:1.5px solid #e6b35c;
+
+      /* 🔥 TEXT CUT-OUT EFFECT */
+      color: transparent;
+      background-clip: text;
+      -webkit-background-clip: text;
+
+      font-weight:700;
+      font-size:15px;
+      text-shadow: 0 0 6px rgba(255, 232, 177, 0.6);
+
+      cursor:pointer;
+    }
+
+    button:disabled{ opacity:.3; }
+
+    button:active{
+      transform: scale(0.98);
+      filter: brightness(0.95);
+    }
+
+
+    button.is-busy{ transform:scale(.98); filter:brightness(1.1); }
+    #dlText{ display:inline-flex; align-items:center; gap:8px; justify-content:center; }
+    .spinner{
+      width:14px;
+      height:14px;
+      border:2px solid rgba(230,179,92,.6);
+      border-top-color:solid rgba(230,179,92,.6);
+      border-radius:50%;
+      animation:spin .8s linear infinite;
+    }
+    @keyframes spin{ to{ transform:rotate(360deg); } }
+
+    .meta{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:13px;
+    }
+    .pill{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid #e6b35c;
+      background:solid #e6b35c;
+    }
+    .footer{ font-size:11px; opacity:.55; text-align:center; }
+        
+    button,
+    button span,
+    button *{
+      color:#fffc39 !important;
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>AI Fai Chun</h1>
+    <p>Upload your image → Generate an AI Fai Chun → Download.</p>
+
+    <div class="imgbox" id="inBox"><span class="hint">Input preview</span></div>
+    <input id="file" type="file" accept="image/*">
+
+    <div class="hint">Choose your Fai Chun style (1 of 4)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <label class="tpl">
+        <input type="radio" name="tpl" value="fai_chun_01" checked>
+        <div class="tplCard">
+          <div class="tplThumb"><img src="Fai_Chun_B_01.png"></div>
+          <div class="tplTitle">新年快樂</div>
+        </div>
+      </label>
+      <label class="tpl">
+        <input type="radio" name="tpl" value="fai_chun_02">
+        <div class="tplCard">
+          <div class="tplThumb"><img src="Fai_Chun_B_02.png"></div>
+          <div class="tplTitle">天天開心</div>
+        </div>
+      </label>
+      <label class="tpl">
+        <input type="radio" name="tpl" value="fai_chun_03">
+        <div class="tplCard">
+          <div class="tplThumb"><img src="Fai_Chun_B_03.png"></div>
+          <div class="tplTitle">掌握流量密馬</div>
+        </div>
+      </label>
+      <label class="tpl">
+        <input type="radio" name="tpl" value="fai_chun_04">
+        <div class="tplCard">
+          <div class="tplThumb"><img src="Fai_Chun_B_04.png"></div>
+          <div class="tplTitle">馬步青雲</div>
+        </div>
+      </label>
+    </div>
+
+    <button id="go" disabled>Generate</button>
+
+    <div class="meta">
+      <span class="pill" id="status">Idle</span>
+      <span>⏱ <span id="timer">00:00</span></span>
+    </div>
+
+    <div class="imgbox" id="outBox"><span class="hint">Result preview</span></div>
+
+    <button id="dl" disabled><span id="dlText">Download</span></button>
+    <div class="footer">STIR Production LTD. AI CNY Photobooth</div>
+  </div>
+</div>
+
+<script>
+const API_BASE = "";
+
+const $ = (id)=>document.getElementById(id);
+const fileEl=$("file"),goBtn=$("go"),dlBtn=$("dl"),
+      statusEl=$("status"),timerEl=$("timer"),
+      inBox=$("inBox"),outBox=$("outBox"),dlText=$("dlText");
+
+let fileObj=null,taskId=null,archiveId=null;
+let timer=null,startAt=0;
+
+const sleep = (ms)=>new Promise(r=>setTimeout(r, ms));
+
+function setStatus(t){statusEl.textContent=t;}
+function fmt(ms){
+  const s=Math.floor(ms/1000),m=Math.floor(s/60);
+  return String(m).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+}
+function startTimer(){
+  stopTimer();
+  startAt=Date.now();
+  timerEl.textContent="00:00";
+  timer=setInterval(()=>timerEl.textContent=fmt(Date.now()-startAt),250);
+}
+function stopTimer(){ if(timer) clearInterval(timer); timer=null; }
+
+fileEl.addEventListener("change",()=>{
+  fileObj=fileEl.files?.[0]||null;
+  taskId=null; archiveId=null;
+
+  dlBtn.disabled=true;
+  dlBtn.classList.remove("is-busy");
+  dlText.textContent="Download";
+  outBox.innerHTML='<span class="hint">Result preview</span>';
+
+  if(fileObj){
+    inBox.innerHTML=`<img src="${URL.createObjectURL(fileObj)}">`;
+    goBtn.disabled=false;
+    setStatus("Ready");
+  }else{
+    inBox.innerHTML='<span class="hint">Input preview</span>';
+    goBtn.disabled=true;
+    setStatus("Idle");
+  }
+});
+
+goBtn.addEventListener("click", async ()=>{
+  if(!fileObj) return;
+
+  const tpl=document.querySelector('input[name="tpl"]:checked')?.value || "fai_chun_01";
+
+  goBtn.disabled=true;
+  dlBtn.disabled=true;
+  setStatus("Uploading");
+  startTimer();
+  outBox.innerHTML='<span class="hint">Rendering…</span>';
+
+  try{
+    const fd=new FormData();
+    fd.append("photo", fileObj);
+    fd.append("templateId", tpl);
+
+    const r=await fetch(`${API_BASE}/api/run`,{method:"POST",body:fd});
+    const j=await r.json();
+    if(!r.ok) throw new Error(j.error||"Run failed");
+
+    taskId=j.taskId;
+    archiveId=j.archiveId;
+
+    let imageUrl=null;
+    for(let i=0;i<240;i++){
+      const rs=await fetch(`${API_BASE}/api/result?taskId=${encodeURIComponent(taskId)}`);
+      if(rs.ok){
+        const js = await rs.json();
+        if(js.ready && js.imageUrl){
+          imageUrl = js.imageUrl;
+          break;
+        }
+      }
+      await sleep(2000);
+    }
+    if(!imageUrl) throw new Error("Timeout");
+
+    outBox.innerHTML=`<img src="${imageUrl}">`;
+    dlBtn.disabled=false;
+    setStatus("Done");
+
+    // ✅ Auto-archive output even if user doesn't press Download
+    const fd2 = new FormData();
+    fd2.append("taskId", taskId);
+    fd2.append("archiveId", archiveId);
+    fetch(`${API_BASE}/api/finalize`, { method:"POST", body: fd2 }).catch(()=>{});
+
+  }catch(e){
+    setStatus("Error");
+    outBox.innerHTML=`<span class="hint">❌ ${e.message}</span>`;
+  }finally{
+    stopTimer();
+    goBtn.disabled=false;
+  }
+});
+
+dlBtn.addEventListener("click", ()=>{
+  if(!taskId || !archiveId) return;
+
+  dlBtn.disabled=true;
+  dlBtn.classList.add("is-busy");
+  dlText.innerHTML=`<span class="spinner"></span> Preparing…`;
+
+  // /api/download returns local output if already finalized
+  window.location.href =
+    `/api/download?taskId=${encodeURIComponent(taskId)}&archiveId=${encodeURIComponent(archiveId)}`;
+
+  setTimeout(()=>{
+    dlBtn.disabled=false;
+    dlBtn.classList.remove("is-busy");
+    dlText.textContent="Download again";
+  }, 1500);
+});
+</script>
+</body>
+</html><!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI Fai Chun</title>
+
+  <style>
+    
+    :root{ font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial; }
+
+body{
+  margin:0;
+  color:#fffc39; /* bright gold */
+
+  background-image:
+    repeating-radial-gradient(
+      circle at 0% 100%,
+      rgba(230,179,92,.18) 0,
+      rgba(230,179,92,.18) 2px,
+      transparent 1px,
+      transparent 25px
+    ),
+
+    /* 🔴 RED GRADIENT BASE (put LAST) */
+    linear-gradient(
       180deg,
       #f14f15 0%,
       #8b0000 100%
