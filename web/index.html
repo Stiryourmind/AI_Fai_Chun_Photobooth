@@ -6,11 +6,54 @@
   <title>AI Fai Chun</title>
 
   <style>
+    
     :root{ font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial; }
-    body{ margin:0; background: linear-gradient(180deg, #c40000 0%, #8b0000 100%); color:#fbff00;}
+
+body{
+  margin:0;
+  color:#fffc39; /* bright gold */
+
+  background-image:
+    repeating-radial-gradient(
+      circle at 0% 100%,
+      rgba(230,179,92,.18) 0,
+      rgba(230,179,92,.18) 2px,
+      transparent 1px,
+      transparent 25px
+    ),
+
+    /* 🔴 RED GRADIENT BASE (put LAST) */
+    linear-gradient(
+      180deg,
+      #f14f15 0%,
+      #8b0000 100%
+    );
+
+  background-size: 
+    100px 100px,
+    cover;
+
+  background-attachment: fixed;
+}
+
+
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(
+      ellipse at top,
+      rgba(255,215,120,.18),
+      transparent 60%
+    );
+}
+
+
     .wrap{ max-width:520px; margin:0 auto; padding:16px; }
     .card{
-      background: linear-gradient(180deg, #c40000 0%, #8b0000 100%);
+      background: transparent;
       border:1px solid #e6b35c;
       border-radius:16px;
       padding:14px;
